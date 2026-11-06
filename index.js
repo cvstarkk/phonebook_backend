@@ -1,107 +1,62 @@
+import "dotenv/config";
 import express from "express";
 import morgan from "morgan";
-import cors from "cors"
-
-
+import cors from "cors";
+import Person from "./models/person.js";
 
 const app = express();
 
-app.use(express.static('dist'))
-app.use(cors())
-app.use(express.json())
-morgan.token('body', (req) =>
-  req.method === 'POST' ? JSON.stringify(req.body) : ''
-)
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+app.use(express.static("dist"));
+app.use(cors());
+app.use(express.json());
 
-const PORT = 3001;
+morgan.token("body", (req) =>
+  req.method === "POST" ? JSON.stringify(req.body) : "",
+);
+app.use(
+  morgan(":method :url :status :res[content-length] - :response-time ms :body"),
+);
 
-const persons = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
+const PORT = process.env.PORT || 3001;
 
-const generateId = () => Math.floor(Math.random() * 1000000)
+app.get("/api/persons", (request, response) => {
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
+});
 
-app.post('/api/persons', (request, response) => {
-  const body = request.body
+app.post("/api/persons", (request, response) => {
+  const { name, number } = request.body;
 
-  if (!body.name || !body.number) {
-    return response.status(400).json({ error: 'name or number is missing' })
+  if (!name || !number) {
+    return response.status(400).json({ error: "name or number is missing" });
   }
 
-  if (persons.find(p => p.name === body.name)) {
-    return response.status(400).json({ error: 'name must be unique' })
-  }
+  const person = new Person({ name, number });
 
-  const person = {
-    id: generateId(),
-    name: body.name,
-    number: body.number
-  }
-
-  persons = persons.concat(person)
-  response.json(person)
-})
-
-app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
 
 app.get("/api/info", (request, response) => {
-  const time = new Date();
-
-  response.send(`
-    <p>Phonebook has info for ${persons.length} people</p>
-    <p>${time}</p>
-  `);
-});
-
-app.get("/api/persons/:id", (req, res) => {
-  const id = req.params.id;
-
-  const person = persons.find((p) => {
-    if (p.id == id) {
-      return p;
-    } else {
-      return false;
-    }
+  Person.countDocuments({}).then((count) => {
+    response.send(`
+      <p>Phonebook has info for ${count} people</p>
+      <p>${new Date()}</p>
+    `);
   });
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end("404 Not found");
-  }
 });
 
-app.delete("/api/persons/:id", (req, res) => {
-    const id = req.params.id
-    persons = persons.filter(n => n.id !== id)
+// Not converted yet (later exercises)
+app.get("/api/persons/:id", (request, response) => {
+  response.status(501).json({ error: "not implemented yet" });
+});
 
-    res.status(204).end()
-})
+app.delete("/api/persons/:id", (request, response) => {
+  response.status(501).json({ error: "not implemented yet" });
+});
 
 app.listen(PORT, () => {
-  console.log("hello world");
+  console.log(`Server running on port ${PORT}`);
 });
-
-
-
