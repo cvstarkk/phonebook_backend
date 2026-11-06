@@ -1,14 +1,5 @@
 import mongoose from "mongoose";
 
-mongoose.set("strictQuery", false);
-
-const url = process.env.MONGODB_URI;
-
-mongoose
-  .connect(url, { family: 4 })
-  .then(() => console.log("connected to MongoDB"))
-  .catch((error) => console.log("error connecting to MongoDB:", error.message));
-
 const personSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -16,14 +7,14 @@ const personSchema = new mongoose.Schema({
     required: true,
   },
   number: {
-  type: String,
-  minLength: 8,
-  required: true,
-  validate: {
-    validator: (value) => /^\d{2,3}-\d+$/.test(value),
-    message: (props) => `${props.value} is not a valid phone number`,
+    type: String,
+    minLength: 8,
+    required: true,
+    validate: {
+      validator: (value) => /^\d{2,3}-\d+$/.test(value),
+      message: (props) => `${props.value} is not a valid phone number`,
+    },
   },
-},
 });
 
 personSchema.set("toJSON", {
